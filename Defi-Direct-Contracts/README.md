@@ -2,7 +2,18 @@
 
 ## Deployed Contract Addresses
 
-### Ethereum Sepolia (Latest Deployment)
+### Avalanche Fuji (Latest Deployment) - **Primary Network**
+- **FiatBridge Contract**: `0x6184fE404FEa2f1ea523B7F32B460F89Aaa6A566`
+- **CCIPTokenTransfer Contract**: `0xCcc45b4e9Ef6B93CD9194aaD5Ae0565495EF21DC`
+- **Mock USDC Token**: `0x6d0FfeF04952180E4dc4AcF549aAC0146DF76313`
+- **Mock USDT Token**: `0x14e1E11956b7fCd46BE6a46f019a22298fc60219`
+- **CCIP-BnM Token**: `0xD21341536c5cF5EB1bcb58f6723cE26e8D8E90e4`
+- **CCIP-LnM Token**: `0x70F5c5C40b873EA597776DA2C21929A8282A3b35`
+- **CCIP Router**: `0xF694E193200268f9a4868e4Aa017A0118C9a8177`
+- **LINK Token**: `0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846`
+- **Chain Selector**: `14767482510784806043`
+
+### Ethereum Sepolia (Secondary Deployment)
 - **FiatBridge Contract**: `0x47EC71e8979ec93fCF71FE64FF1F5ee81D51B024`
 - **CCIPTokenTransfer Contract**: `0x428e8EB515a8f3d52fDCA8044F1C9334D86a6F2A`
 - **Mock USDC Token**: `0xF1Cfc4A96166158ED568Ea2d6aBc739Ec0ddAcAb`
@@ -27,6 +38,29 @@
 - **Scroll**: `0x88b11aB13cd7BE9846FA38AB85Ef133e3093375c`
 - **Sepolia**: `0x88b11aB13cd7BE9846FA38AB85Ef133e3093375c`
 - **Lisk**: `0x88b11aB13cd7BE9846FA38AB85Ef133e3093375c`
+
+## Avalanche Fuji Deployment Configuration
+
+### Contract Configuration
+- **Deployer Account**: `0xeD6c9f2573343043DD443bc633f9071ABDF688Fd`
+- **Transaction Manager**: `0xeD6c9f2573343043DD443bc633f9071ABDF688Fd`
+- **Fee Receiver**: `0xeD6c9f2573343043DD443bc633f9071ABDF688Fd`
+- **Vault Address**: `0xeD6c9f2573343043DD443bc633f9071ABDF688Fd`
+- **Spread Fee**: 100 basis points (1%)
+
+### Supported Tokens
+- **Mock USDC**: 50,000 minted to deployer
+- **Mock USDT**: 50,000 minted to deployer
+- **CCIP-BnM**: Test token for cross-chain transfers
+- **CCIP-LnM**: Test token for cross-chain transfers
+- **LINK**: For CCIP fee payments
+- **WAVAX**: Native token for Avalanche network
+
+### Cross-Chain Configuration
+- **Supported Destination Chains**:
+  - Ethereum Sepolia (Chain Selector: `16015286601757825753`)
+  - Base Sepolia (Chain Selector: `10344971235874465080`)
+  - Polygon Mumbai (Chain Selector: `12532609583862916517`)
 
 ## Ethereum Sepolia Deployment Configuration
 
@@ -63,9 +97,17 @@
 - 10,000 USDC minted to deployer
 - 10,000 USDT minted to deployer
 
-
-
 ## Deployment History
+
+### Avalanche Fuji - Latest Deployment (December 2024)
+✅ **Successfully Deployed and Configured**
+- All contracts deployed and configured successfully
+- All tokens (USDC, USDT, CCIP-BnM, CCIP-LnM, LINK, WAVAX) added to support lists  
+- Test tokens minted to deployer (50,000 USDC/USDT each)
+- CCIP configuration completed with multi-chain support
+- Cross-chain transfers enabled to Ethereum Sepolia, Base Sepolia, and Polygon Mumbai
+- FiatBridge contract properly linked with CCIPTokenTransfer
+- **Primary Network**: Now serving as the main deployment for cross-chain operations
 
 ### Ethereum Sepolia - December 23, 2024
 ✅ **Successfully Deployed and Configured**
@@ -105,7 +147,8 @@
 ### Dynamic Chain Configuration
 The frontend now automatically switches between different chain configurations based on the connected wallet's network:
 
-- **Ethereum Sepolia (Chain ID: 11155111)** - Default/Latest deployment
+- **Avalanche Fuji (Chain ID: 43113)** - Primary/Latest deployment
+- **Ethereum Sepolia (Chain ID: 11155111)** - Secondary deployment
 - **Base Sepolia (Chain ID: 84532)** - Previous deployment
 
 Contract addresses, token addresses, and CCIP configurations are automatically selected based on the active chain.
@@ -146,7 +189,6 @@ Contract addresses, token addresses, and CCIP configurations are automatically s
 4. Transaction proceeds with precise, market-based fee calculation
 5. Price feed usage is logged via `PriceFeedUsed` event
 
-
 ### Cross-Chain Operations
 - CCIP enables token transfers between supported chains
 - Price feeds ensure consistent fee calculation across all chains
@@ -170,10 +212,30 @@ const chainConfig = getChainConfig(chainId);
 ```
 
 ### Supported Networks
-- **Ethereum Sepolia** (Chain ID: 11155111) - Primary network with latest features
-- **Base Sepolia** (Chain ID: 84532) - Secondary network for testing
+- **Avalanche Fuji** (Chain ID: 43113) - Primary network with latest features
+- **Ethereum Sepolia** (Chain ID: 11155111) - Secondary network for testing
+- **Base Sepolia** (Chain ID: 84532) - Previous deployment
 
-Both networks support cross-chain transfers to:
-- Base Sepolia
-- Avalanche Fuji  
+All networks support cross-chain transfers to:
+- Avalanche Fuji
+- Ethereum Sepolia
+- Base Sepolia  
 - Polygon Mumbai
+
+## Contract Addresses
+
+### Avalanche Fuji Testnet (Chain ID: 43113) - **Primary Network**
+- **FiatBridge Contract**: `0x6184fE404FEa2f1ea523B7F32B460F89Aaa6A566`
+- **CCIPTokenTransfer Contract**: `0xCcc45b4e9Ef6B93CD9194aaD5Ae0565495EF21DC`
+- **Mock USDC**: `0x6d0FfeF04952180E4dc4AcF549aAC0146DF76313`
+- **Mock USDT**: `0x14e1E11956b7fCd46BE6a46f019a22298fc60219`
+- **CCIP Router**: `0xF694E193200268f9a4868e4Aa017A0118C9a8177`
+- **LINK Token**: `0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846`
+- **CCIP-BnM**: `0xD21341536c5cF5EB1bcb58f6723cE26e8D8E90e4`
+- **CCIP-LnM**: `0x70F5c5C40b873EA597776DA2C21929A8282A3b35`
+
+### Ethereum Sepolia Testnet (Chain ID: 11155111) - **Secondary Network**
+- **FiatBridge Contract**: `0x47EC71e8979ec93fCF71FE64FF1F5ee81D51B024`
+- **CCIPTokenTransfer Contract**: `0x428e8EB515a8f3d52fDCA8044F1C9334D86a6F2A`
+- **CCIP Router**: `0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59`
+- **LINK Token**: `0x779877A7B0D9E8603169DdbD7836e478b4624789`

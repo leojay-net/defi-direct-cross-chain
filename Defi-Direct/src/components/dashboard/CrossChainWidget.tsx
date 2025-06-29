@@ -1,55 +1,15 @@
 "use client";
 
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Zap, TrendingUp, Clock, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { gql, request } from 'graphql-request';
-
-// GraphQL query for CCIP analytics
-const CCIP_ANALYTICS_QUERY = gql`
-  query CCIPAnalytics {
-    crossChainTransferInitiateds(first: 1000, orderBy: blockNumber, orderDirection: desc) {
-      id
-      messageId
-      user
-      destinationChain
-      token
-      amount
-      blockNumber
-      blockTimestamp
-      transactionHash
-    }
-    ccipcontractUpdateds(first: 10, orderBy: blockNumber, orderDirection: desc) {
-      id
-      oldContract
-      newContract
-      blockNumber
-      blockTimestamp
-    }
-  }
-`;
-
-// Subgraph endpoint
-const SUBGRAPH_URL = 'https://api.studio.thegraph.com/query/107317/defi-direct-graph/version/latest';
+import { BackendService, BackendCrossChainTransfer } from '@/services/backendService';
 
 // Define proper types for the data
-interface TransferData {
-    id: string;
-    amount: string;
-    token?: string;
-    destinationChain?: string;
-    blockTimestamp: string;
-    messageId: string;
-    transactionHash?: string;
-}
-
-interface AnalyticsData {
-    crossChainTransferInitiateds?: TransferData[];
-}
-
 interface Transfer {
     id: string;
     amount: string;
@@ -70,17 +30,20 @@ interface Analytics {
     avgTimeChange: number;
 }
 
-// Hook to fetch CCIP analytics
+// Hook to fetch CCIP analytics from backend
 const useCCIPAnalytics = () => {
     return useQuery({
         queryKey: ['ccip-analytics'],
         queryFn: async () => {
             try {
-                const data = await request(SUBGRAPH_URL, CCIP_ANALYTICS_QUERY);
-                return data;
+                // Get all cross-chain transfers from backend
+                const transfers = await BackendService.getAllCrossChainTransfers({
+                    page_size: 100 // Get more data for analytics
+                });
+                return transfers;
             } catch (error) {
                 console.error('Error fetching CCIP analytics:', error);
-                return null;
+                return [];
             }
         },
         refetchInterval: 30000, // Refetch every 30 seconds
@@ -88,9 +51,9 @@ const useCCIPAnalytics = () => {
     });
 };
 
-// Calculate analytics from subgraph data
-const calculateAnalytics = (data: AnalyticsData): Analytics => {
-    if (!data?.crossChainTransferInitiateds) {
+// Calculate analytics from backend data
+const calculateAnalytics = (transfers: BackendCrossChainTransfer[]): Analytics => {
+    if (!transfers || transfers.length === 0) {
         return {
             totalTransfers: 0,
             volume24h: 0,
@@ -101,7 +64,6 @@ const calculateAnalytics = (data: AnalyticsData): Analytics => {
         };
     }
 
-    const transfers = data.crossChainTransferInitiateds;
     const now = Math.floor(Date.now() / 1000);
     const oneDayAgo = now - 86400; // 24 hours ago
 
@@ -110,20 +72,20 @@ const calculateAnalytics = (data: AnalyticsData): Analytics => {
 
     // Calculate 24h volume (sum of amounts)
     const volume24h = transfers
-        .filter((t: TransferData) => parseInt(t.blockTimestamp) > oneDayAgo)
-        .reduce((sum: number, t: TransferData) => {
+        .filter((t) => parseInt(t.timestamp) > oneDayAgo)
+        .reduce((sum, t) => {
             const amount = parseFloat(t.amount) || 0;
             return sum + amount;
         }, 0);
 
-    // Calculate average time (simplified - using block timestamps)
-    const recentTransfers: Transfer[] = transfers.slice(0, 10).map((t: TransferData) => ({
+    // Calculate average time (simplified - using timestamps)
+    const recentTransfers: Transfer[] = transfers.slice(0, 10).map((t) => ({
         id: t.id,
-        amount: `${parseFloat(t.amount || '0').toFixed(2)} ${t.token || 'TOKEN'}`,
-        from: 'Current Chain',
+        amount: `${parseFloat(t.amount || '0').toFixed(2)} ${t.tokenSymbol || 'TOKEN'}`,
+        from: t.sourceChain || 'Current Chain',
         to: t.destinationChain || 'Unknown',
-        status: 'confirmed',
-        time: `${Math.floor((now - parseInt(t.blockTimestamp)) / 60)}m ago`,
+        status: t.status,
+        time: `${Math.floor((now - parseInt(t.timestamp)) / 60)}m ago`,
         messageId: t.messageId,
         transactionHash: t.transactionHash,
     }));
@@ -144,7 +106,7 @@ const calculateAnalytics = (data: AnalyticsData): Analytics => {
 
 export const CrossChainWidget = () => {
     const { data, isLoading, error } = useCCIPAnalytics();
-    const analytics = calculateAnalytics(data as AnalyticsData);
+    const analytics = calculateAnalytics(data || []);
 
     const stats = [
         {
@@ -208,7 +170,7 @@ export const CrossChainWidget = () => {
                 <CardContent>
                     <div className="text-center py-4">
                         <p className="text-gray-400 text-sm">Unable to load analytics</p>
-                        <p className="text-gray-500 text-xs mt-1">Check subgraph status</p>
+                        <p className="text-gray-500 text-xs mt-1">Check backend connection</p>
                     </div>
                 </CardContent>
             </Card>

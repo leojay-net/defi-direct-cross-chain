@@ -35,15 +35,21 @@ interface FormattedTransaction {
 }
 
 export const retrieveTransactions = async (userAddress: `0x${string}`): Promise<FormattedTransaction[]> => {
+  console.log("=== RETRIEVE TRANSACTIONS SERVICE START ===");
+  console.log("1. retrieveTransactions called with address:", userAddress);
+
   if (!userAddress) {
+    console.log("❌ User address is undefined");
     console.error("User address is undefined. Provide a valid address.");
     return [];
   }
 
   try {
+    console.log("2. Fetching transactions from backend...");
     // Fetch transactions from the backend
     let backendTransactions: BackendTransaction[] = [];
     try {
+      console.log("3. Making GET request to backend...");
       const response = await fetch(
         "https://backend-cf8a.onrender.com/transaction/transactions/",
         {
@@ -53,25 +59,32 @@ export const retrieveTransactions = async (userAddress: `0x${string}`): Promise<
           },
         }
       );
+      console.log("4. Backend response status:", response.status);
+
       if (!response.ok) {
         const errorText = await response.text();
+        console.log("❌ Backend GET failed:", errorText);
         throw new Error(
           `Backend GET failed: ${response.status} - ${errorText}`
         );
       }
+
       backendTransactions = await response.json();
-      console.log("Backend transactions:", backendTransactions);
+      console.log("5. Backend transactions received:", backendTransactions);
+      console.log("6. Number of transactions:", backendTransactions.length);
     } catch (error) {
+      console.log("❌ Backend GET error:", error);
       console.error("Backend GET error:", error);
       backendTransactions = [];
     }
 
     // Log raw transactions
     console.log(
-      `Raw transactions for user ${userAddress}:`,
+      `7. Raw transactions for user ${userAddress}:`,
       backendTransactions
     );
 
+    console.log("8. Filtering and deduplicating transactions...");
     // Filter and deduplicate backend transactions
     const dedupedBackendTransactions = backendTransactions
       .filter((tx: BackendTransaction) => {
@@ -79,7 +92,7 @@ export const retrieveTransactions = async (userAddress: `0x${string}`): Promise<
           tx.userAddress &&
           tx.userAddress.toLowerCase() === userAddress.toLowerCase();
         if (!isValid) {
-          console.warn("Filtered out transaction:", tx);
+          console.log("9. Filtered out transaction:", tx);
         }
         return isValid;
       })
@@ -95,10 +108,12 @@ export const retrieveTransactions = async (userAddress: `0x${string}`): Promise<
       }, []);
 
     console.log(
-      `Deduped backend transactions for ${userAddress}:`,
+      `10. Deduped backend transactions for ${userAddress}:`,
       dedupedBackendTransactions
     );
+    console.log("11. Number of deduped transactions:", dedupedBackendTransactions.length);
 
+    console.log("12. Mapping to consistent format...");
     // Map to consistent format
     const formattedTransactions = dedupedBackendTransactions.map(
       (tx: BackendTransaction, index: number): FormattedTransaction => {
@@ -123,21 +138,25 @@ export const retrieveTransactions = async (userAddress: `0x${string}`): Promise<
           isRefunded: tx.isRefunded || false,
           txId: tx.txId || `tx-${index}-${timestamp}`,
         };
-        console.log(`Formatted transaction ${index}:`, formattedTx);
+        console.log(`13. Formatted transaction ${index}:`, formattedTx);
         return formattedTx;
       }
     );
 
+    console.log("14. Sorting transactions by timestamp...");
     // Sort by transactionTimestamp (newest first)
     const sortedTransactions = formattedTransactions.sort(
       (a, b) =>
         Number(b.transactionTimestamp) - Number(a.transactionTimestamp)
     );
 
-    console.log(`Sorted transactions for ${userAddress}:`, sortedTransactions);
+    console.log(`15. Sorted transactions for ${userAddress}:`, sortedTransactions);
+    console.log("16. Final number of transactions:", sortedTransactions.length);
+    console.log("=== RETRIEVE TRANSACTIONS SERVICE END ===");
 
     return sortedTransactions;
   } catch (error) {
+    console.log("❌ Failed to retrieve transactions:", error);
     console.error("Failed to retrieve transactions:", error);
     return [];
   }

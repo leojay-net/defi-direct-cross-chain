@@ -14,6 +14,7 @@ import { useChainId } from "wagmi"
 import { formatBalance } from "@/utils/formatBalance"
 import { fetchTokenPrice } from "@/utils/fetchTokenprice"
 import { TransferSummary } from "./transfer-summary"
+import { CONTRACT_ADDRESS } from "@/paydirect"
 
 interface Bank {
   id: number;
@@ -379,24 +380,62 @@ export function TransferModal({ open, onOpenChange }: TransferModalProps) {
   };
 
   const handleConfirmTransfer = async () => {
+    console.log("=== TRANSFER FLOW START ===");
+    console.log("1. handleConfirmTransfer called");
+
+    // Check which chain the user is connected to
+    console.log("1.5. Checking chain configuration...");
+    console.log("1.6. Wallet client chain:", walletClient?.chain);
+    console.log("1.7. Public client chain:", publicClient?.chain);
+    console.log("1.8. CONTRACT_ADDRESS from paydirect:", CONTRACT_ADDRESS);
+
+    // Check if user is on the correct chain (Avalanche Fuji - 43113)
+    if (walletClient?.chain?.id !== 43113) {
+      console.log("❌ User is not on Avalanche Fuji. Current chain:", walletClient?.chain?.id);
+      toast.error("Please switch to Avalanche Fuji network to continue");
+
+      // Try to switch to Avalanche Fuji
+      try {
+        await walletClient?.switchChain({ id: 43113 });
+        console.log("✅ Successfully switched to Avalanche Fuji");
+        toast.success("Switched to Avalanche Fuji network");
+      } catch (error) {
+        console.log("❌ Failed to switch chain:", error);
+        toast.error("Please manually switch to Avalanche Fuji network in your wallet");
+        return;
+      }
+    } else {
+      console.log("✅ User is on correct chain (Avalanche Fuji)");
+    }
+
     if (!approved) {
+      console.log("❌ Transfer failed: Tokens not approved");
       toast.error("Please approve tokens first");
       return;
     }
 
+    console.log("2. Tokens are approved, proceeding with transfer");
     setLoading(true); // Set loading state while processing
 
     const price = selectedToken.name === "USDC" ? usdcPrice : usdtPrice;
-    console.log("Withdrawal price:", price);
+    console.log("3. Token price:", price);
     const amountValue = parseFloat(formData.amount);
+    console.log("4. Amount value:", amountValue);
     const tokenAmount = await convertFiatToToken(amountValue, selectedToken.name, price);
+    console.log("5. Token amount calculated:", tokenAmount);
 
     try {
       if (!walletClient || !publicClient) {
+        console.log("❌ Transfer failed: Wallet or public client not available");
         throw new Error("Wallet or public client is not available");
       }
 
+      console.log("6. Wallet and public client available");
+      console.log("7. Selected token:", selectedToken);
+      console.log("8. Form data:", formData);
+
       // Step 1: First initiate the blockchain transaction to get txHash
+      console.log("9. Initiating blockchain transaction...");
       const receipt = await initiateTransaction(
         tokenAmount,
         selectedToken.address,
@@ -408,19 +447,28 @@ export function TransferModal({ open, onOpenChange }: TransferModalProps) {
         walletClient
       );
 
+      console.log("10. Blockchain transaction receipt:", receipt);
+
       if (!receipt) {
+        console.log("❌ Transfer failed: No transaction receipt returned");
         throw new Error("No transaction receipt returned");
       }
 
       const txHash = receipt.transactionHash as `0x${string}`;
+      console.log("11. Transaction hash:", txHash);
 
       // Parse the transaction receipt to get event data
+      console.log("12. Parsing transaction receipt...");
       const parsedReceipt = await parseTransactionReceipt(receipt);
+      console.log("13. Parsed receipt:", parsedReceipt);
+
       if (!parsedReceipt) {
+        console.log("❌ Transfer failed: Failed to parse transaction receipt");
         throw new Error("Failed to parse transaction receipt");
       }
 
       // Step 2: Save initial transaction to backend database
+      console.log("14. Saving initial transaction to backend...");
       const transactionData = {
         txId: txHash,
         userAddress: walletClient.account.address,
@@ -436,7 +484,7 @@ export function TransferModal({ open, onOpenChange }: TransferModalProps) {
         isRefunded: false,
       };
 
-      console.log("Sending initial transaction data:", transactionData);
+      console.log("15. Transaction data to save:", transactionData);
 
       const initialResponse = await fetch(
         "https://backend-cf8a.onrender.com/transaction/transactions/",
@@ -450,18 +498,23 @@ export function TransferModal({ open, onOpenChange }: TransferModalProps) {
         }
       );
 
+      console.log("16. Initial backend response status:", initialResponse.status);
+
       if (!initialResponse.ok) {
         const errorText = await initialResponse.text();
+        console.log("❌ Backend POST failed:", errorText);
         throw new Error(
           `Backend POST failed: ${initialResponse.status} - ${errorText}`
         );
       }
 
       const initialResponseData = await initialResponse.json();
-      console.log("Initial backend response:", initialResponseData);
+      console.log("17. Initial backend response data:", initialResponseData);
       const backendId = initialResponseData.id;
+      console.log("18. Backend transaction ID:", backendId);
 
       // Step 3: Process fiat transfer via Paystack
+      console.log("19. Processing fiat transfer via Paystack...");
       const response = await fetch('/api/initiate-transfer', {
         method: 'POST',
         headers: {
@@ -475,11 +528,19 @@ export function TransferModal({ open, onOpenChange }: TransferModalProps) {
         }),
       });
 
+      console.log("20. Paystack API response status:", response.status);
       const result = await response.json();
+      console.log("21. Paystack API result:", result);
 
       if (result.success) {
+        console.log("22. Paystack transfer successful, proceeding to complete transaction");
+
         // Step 4: Complete the transaction using server-side transaction manager
         try {
+          console.log("23. Calling complete transaction API...");
+          console.log("24. Transaction ID to complete:", parsedReceipt.txId);
+          console.log("25. Amount spent:", parsedReceipt.amount.toString());
+
           const completeResponse = await fetch('/api/complete-transaction', {
             method: 'POST',
             headers: {
@@ -491,12 +552,15 @@ export function TransferModal({ open, onOpenChange }: TransferModalProps) {
             }),
           });
 
+          console.log("26. Complete transaction API response status:", completeResponse.status);
           const completeResult = await completeResponse.json();
+          console.log("27. Complete transaction API result:", completeResult);
 
           if (completeResult.success) {
-            console.log("Transaction completed successfully:", completeResult.txHash);
+            console.log("28. ✅ Transaction completed successfully:", completeResult.txHash);
 
             // Step 5: Update backend transaction with completed status
+            console.log("29. Updating backend transaction with completed status...");
             const updateData = {
               txId: txHash,
               userAddress: walletClient.account.address,
@@ -512,7 +576,7 @@ export function TransferModal({ open, onOpenChange }: TransferModalProps) {
               isRefunded: false,
             };
 
-            console.log("Sending update transaction data:", updateData);
+            console.log("30. Update data:", updateData);
 
             const updateResponse = await fetch(
               `https://backend-cf8a.onrender.com/transaction/transactions/${backendId}/`,
@@ -526,36 +590,71 @@ export function TransferModal({ open, onOpenChange }: TransferModalProps) {
               }
             );
 
+            console.log("31. Update backend response status:", updateResponse.status);
+
             if (!updateResponse.ok) {
               const errorText = await updateResponse.text();
-              console.warn(
-                `Backend PUT failed: ${updateResponse.status} - ${errorText}`
-              );
+              console.log("⚠️ Backend PUT failed:", errorText);
             } else {
               const updateResponseData = await updateResponse.json();
-              console.log("Update backend response:", updateResponseData);
+              console.log("32. ✅ Backend update successful:", updateResponseData);
             }
 
             // Trigger transaction list re-fetch
+            console.log("33. Triggering transaction list re-fetch...");
             refetchTransactions();
 
+            console.log("34. ✅ Transfer completed successfully!");
             toast.success(`Your transfer of ₦${formData.amount.toString()} is complete!`);
+
+            // Reset form and close modal
+            console.log("35. Resetting form and closing modal...");
+            resetForm();
+            onOpenChange(false);
+            console.log("36. ✅ Modal closed successfully");
           } else {
-            console.warn("Complete transaction failed:", completeResult.message);
-            toast.error("Transfer successful but smart contract completion failed");
+            console.log("❌ Complete transaction failed:", completeResult.message);
+            console.log("❌ Complete transaction error type:", completeResult.error);
+
+            // Show more specific error messages based on the error type
+            if (completeResult.error === 'MISSING_PRIVATE_KEY') {
+              toast.error("Transaction manager not configured. Please contact support.");
+            } else if (completeResult.error === 'INSUFFICIENT_FUNDS') {
+              toast.error("Transaction manager has insufficient funds for gas fees.");
+            } else if (completeResult.error === 'CONTRACT_REVERT') {
+              toast.error("Smart contract rejected the transaction. Please try again.");
+            } else if (completeResult.error === 'NETWORK_ERROR') {
+              toast.error("Network connection error. Please check your connection and try again.");
+            } else {
+              toast.error(`Transfer successful but smart contract completion failed: ${completeResult.message}`);
+            }
           }
         } catch (completeError) {
-          console.error("Failed to complete transaction:", completeError);
-          toast.error("Transfer successful but smart contract completion failed");
+          console.log("❌ Failed to complete transaction:", completeError);
+
+          // Check if it's a network error or other specific error
+          if (completeError instanceof Error) {
+            if (completeError.message.includes('fetch')) {
+              toast.error("Network error during transaction completion. Please try again.");
+            } else {
+              toast.error(`Transaction completion error: ${completeError.message}`);
+            }
+          } else {
+            toast.error("Transfer successful but smart contract completion failed");
+          }
         }
 
         // Reset form and close modal
+        console.log("37. Resetting form and closing modal (after error)...");
         resetForm();
         onOpenChange(false);
+        console.log("38. ✅ Modal closed after error");
       } else {
+        console.log("❌ Paystack transfer failed:", result.message);
         toast.error(result.message || "Could not complete your transfer request");
       }
     } catch (error) {
+      console.log("❌ Transfer error caught:", error);
       let errorMessage = "An unexpected error occurred. Please try again later.";
       if (isErrorWithMessage(error)) {
         const err = error as { shortMessage?: string; message?: string };
@@ -570,10 +669,13 @@ export function TransferModal({ open, onOpenChange }: TransferModalProps) {
       toast.error(errorMessage);
       console.error('Transfer error:', error);
     } finally {
+      console.log("39. Finally block - resetting loading state");
       if (open) {
         setLoading(false); // Only reset loading state if the modal is still open
+        console.log("40. ✅ Loading state reset");
       }
     }
+    console.log("=== TRANSFER FLOW END ===");
   };
 
   // Handle quote acceptance

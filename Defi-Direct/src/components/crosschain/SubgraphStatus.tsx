@@ -2,174 +2,153 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RefreshCw, AlertTriangle, CheckCircle, XCircle, Info, ExternalLink } from 'lucide-react';
-import { SubgraphService } from '@/services/subgraphService';
+import { Button } from '@/components/ui/button';
+import { Loader2, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { BackendService } from '@/services/backendService';
 
-export const SubgraphStatus: React.FC = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [status, setStatus] = useState<'checking' | 'connected' | 'not-syncing' | 'error'>('checking');
-    const [error, setError] = useState<string | null>(null);
+export const BackendStatus: React.FC = () => {
+    const [status, setStatus] = useState<'checking' | 'connected' | 'error' | 'not_syncing'>('checking');
+    const [lastCheck, setLastCheck] = useState<Date | null>(null);
 
-    const checkSubgraphStatus = async () => {
-        setIsLoading(true);
-        setError(null);
-
+    const checkBackendStatus = async () => {
         try {
-            // Try to fetch a simple query to check if subgraph is syncing
-            await SubgraphService.getAllCrossChainTransfers({ first: 1 });
-            setStatus('connected');
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            setStatus('checking');
 
-            if (errorMessage.includes('not started syncing yet')) {
-                setStatus('not-syncing');
-            } else {
-                setStatus('error');
-                setError(errorMessage);
-            }
-        } finally {
-            setIsLoading(false);
+            // Try to fetch a simple query to check if backend is responding
+            await BackendService.getAllCrossChainTransfers({ page_size: 1 });
+
+            setStatus('connected');
+            setLastCheck(new Date());
+        } catch (error) {
+            console.error('Backend status check failed:', error);
+            setStatus('error');
+            setLastCheck(new Date());
         }
     };
 
     useEffect(() => {
-        checkSubgraphStatus();
+        checkBackendStatus();
     }, []);
 
     const getStatusConfig = () => {
         switch (status) {
             case 'connected':
                 return {
-                    icon: CheckCircle,
-                    color: 'text-green-500',
-                    bgColor: 'bg-green-500/10',
-                    borderColor: 'border-green-500/20',
-                    title: 'Subgraph Connected',
-                    description: 'The subgraph is syncing and ready to serve data'
+                    icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+                    badge: <Badge variant="default" className="bg-green-500">Connected</Badge>,
+                    title: 'Backend Connected',
+                    description: 'The backend API is responding and ready to serve data'
                 };
-            case 'not-syncing':
+            case 'not_syncing':
                 return {
-                    icon: AlertTriangle,
-                    color: 'text-yellow-500',
-                    bgColor: 'bg-yellow-500/10',
-                    borderColor: 'border-yellow-500/20',
-                    title: 'Subgraph Not Syncing',
-                    description: 'The subgraph is deployed but has not started syncing yet'
+                    icon: <AlertCircle className="h-5 w-5 text-yellow-500" />,
+                    badge: <Badge variant="default" className="bg-yellow-500">Not Syncing</Badge>,
+                    title: 'Backend Not Syncing',
+                    description: 'The backend is deployed but has not started syncing yet'
                 };
             case 'error':
                 return {
-                    icon: XCircle,
-                    color: 'text-red-500',
-                    bgColor: 'bg-red-500/10',
-                    borderColor: 'border-red-500/20',
-                    title: 'Subgraph Error',
-                    description: 'There was an error connecting to the subgraph'
+                    icon: <XCircle className="h-5 w-5 text-red-500" />,
+                    badge: <Badge variant="default" className="bg-red-500">Error</Badge>,
+                    title: 'Backend Error',
+                    description: 'There was an error connecting to the backend API'
                 };
             default:
                 return {
-                    icon: RefreshCw,
-                    color: 'text-blue-500',
-                    bgColor: 'bg-blue-500/10',
-                    borderColor: 'border-blue-500/20',
-                    title: 'Checking Subgraph',
-                    description: 'Verifying subgraph connection...'
+                    icon: <Loader2 className="h-5 w-5 animate-spin text-blue-500" />,
+                    badge: <Badge variant="default" className="bg-blue-500">Checking</Badge>,
+                    title: 'Checking Backend',
+                    description: 'Verifying backend connection...'
                 };
         }
     };
 
     const config = getStatusConfig();
-    const Icon = config.icon;
 
     return (
-        <Card className={`bg-[#1C1C27] border-gray-700 ${config.bgColor} ${config.borderColor}`}>
+        <Card className="bg-[#1C1C27] border-[#9C2CFF]/20">
             <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
-                    <Icon className={`h-5 w-5 ${config.color}`} />
-                    Subgraph Status
+                    {config.icon}
+                    Backend Status
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <span className="text-gray-300">Status:</span>
-                    <Badge variant={status === 'connected' ? 'default' : 'destructive'}>
-                        {isLoading ? 'Checking...' :
-                            status === 'connected' ? 'Connected' :
-                                status === 'not-syncing' ? 'Not Syncing' : 'Error'}
-                    </Badge>
+                    <div>
+                        <h3 className="font-medium text-white">{config.title}</h3>
+                        <p className="text-gray-400 text-sm">{config.description}</p>
+                    </div>
+                    {config.badge}
                 </div>
 
-                <p className="text-gray-300 text-sm">{config.description}</p>
-
-                {status === 'not-syncing' && (
-                    <Alert className="border-yellow-500/50 bg-yellow-900/20">
-                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                        <AlertDescription className="text-yellow-400">
-                            <div className="space-y-2">
-                                <p>The subgraph is deployed but hasn&apos;t started syncing yet. This usually happens when:</p>
-                                <ul className="list-disc list-inside space-y-1 text-sm">
-                                    <li>No events have been emitted from the contract yet</li>
-                                    <li>The start block is too recent</li>
-                                    <li>The subgraph needs to be redeployed</li>
-                                </ul>
-                                <div className="mt-3 space-y-2">
-                                    <p className="font-medium">To fix this:</p>
-                                    <ol className="list-decimal list-inside space-y-1 text-sm">
-                                        <li>Perform a cross-chain transfer to trigger events</li>
-                                        <li>Redeploy the subgraph with an earlier start block</li>
-                                        <li>Check the subgraph deployment status</li>
-                                    </ol>
-                                </div>
-                            </div>
-                        </AlertDescription>
-                    </Alert>
+                {status === 'not_syncing' && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                        <h4 className="font-medium text-yellow-400 mb-2">Backend Not Syncing</h4>
+                        <p className="text-gray-400 text-sm mb-3">The backend is deployed but hasn&apos;t started syncing yet. This usually happens when:</p>
+                        <ul className="text-gray-400 text-sm space-y-1 mb-3">
+                            <li>• The backend needs to be restarted</li>
+                            <li>• Database connection issues</li>
+                            <li>• Environment configuration problems</li>
+                        </ul>
+                        <div className="text-gray-400 text-sm">
+                            <p className="font-medium mb-1">Troubleshooting steps:</p>
+                            <ul className="space-y-1">
+                                <li>• Check backend logs for errors</li>
+                                <li>• Verify database connectivity</li>
+                                <li>• Restart the backend service</li>
+                            </ul>
+                        </div>
+                    </div>
                 )}
 
-                {error && (
-                    <Alert className="border-red-500/50 bg-red-900/20">
-                        <XCircle className="h-4 w-4 text-red-500" />
-                        <AlertDescription className="text-red-400">
-                            Error: {error}
-                        </AlertDescription>
-                    </Alert>
+                {status === 'error' && (
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                        <h4 className="font-medium text-red-400 mb-2">Connection Error</h4>
+                        <p className="text-gray-400 text-sm">Unable to connect to the backend API. Please check:</p>
+                        <ul className="text-gray-400 text-sm space-y-1 mt-2">
+                            <li>• Backend service is running</li>
+                            <li>• Network connectivity</li>
+                            <li>• API endpoint configuration</li>
+                        </ul>
+                    </div>
                 )}
 
                 <div className="flex gap-2">
                     <Button
-                        onClick={checkSubgraphStatus}
-                        disabled={isLoading}
                         variant="outline"
-                        className="border-gray-600 text-gray-300 hover:bg-[#2F2F3A]"
+                        size="sm"
+                        onClick={checkBackendStatus}
+                        disabled={status === 'checking'}
+                        className="flex items-center gap-2"
                     >
-                        {isLoading ? (
-                            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                        )}
-                        Check Status
+                        <RefreshCw className={`h-4 w-4 ${status === 'checking' ? 'animate-spin' : ''}`} />
+                        Refresh Status
                     </Button>
 
                     <Button
                         variant="outline"
-                        className="border-gray-600 text-gray-300 hover:bg-[#2F2F3A]"
-                        onClick={() => window.open('https://thegraph.com/studio/subgraph/107317/defi-direct-graph', '_blank')}
+                        size="sm"
+                        onClick={() => window.open('https://backend-cf8a.onrender.com', '_blank')}
+                        className="flex items-center gap-2"
                     >
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        View on Studio
+                        View Backend
                     </Button>
                 </div>
 
-                <div className="p-3 bg-gray-900/50 rounded-lg border border-gray-700">
-                    <div className="flex items-start gap-2">
-                        <Info className="h-4 w-4 text-[#9C2CFF] mt-0.5 flex-shrink-0" />
-                        <div className="text-xs text-gray-300">
-                            <div className="font-medium mb-1">Subgraph Details:</div>
-                            <div>Network: Avalanche Fuji</div>
-                            <div>Contract: 0xfE2567096081eB4CF4E0DE60f4E76A9cFD3b39D7</div>
-                            <div>Start Block: 42583659</div>
-                        </div>
+                {lastCheck && (
+                    <div className="text-xs text-gray-500">
+                        Last checked: {lastCheck.toLocaleTimeString()}
+                    </div>
+                )}
+
+                <div className="bg-gray-800/50 rounded-lg p-3">
+                    <div className="font-medium mb-1">Backend Details:</div>
+                    <div className="text-sm text-gray-400 space-y-1">
+                        <div>URL: {process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backend-cf8a.onrender.com'}</div>
+                        <div>Status: {status}</div>
+                        <div>Last Check: {lastCheck ? lastCheck.toLocaleString() : 'Never'}</div>
                     </div>
                 </div>
             </CardContent>

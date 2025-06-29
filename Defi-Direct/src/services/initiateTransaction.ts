@@ -2,6 +2,7 @@ import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/paydirect';
 import { ethers } from 'ethers';
 import { TransactionReceipt as ViemTransactionReceipt } from 'viem';
 import { TransactionReceipt as EthersTransactionReceipt } from 'ethers';
+import { getPriceFeedAddress, getChainConfig } from '@/config';
 
 type CombinedTransactionReceipt = ViemTransactionReceipt | EthersTransactionReceipt;
 
@@ -106,6 +107,28 @@ export const initiateTransaction = async (
   }
 
   try {
+    // Get the current chain ID
+    const chainId = publicClient.chain?.id;
+    if (!chainId) {
+      throw new Error("Unable to determine chain ID");
+    }
+
+    // Get the aggregator address for the token based on chain and token type
+    let aggregatorAddress: string;
+    const config = getChainConfig(chainId);
+
+    if (tokenAddress.toLowerCase() === config.USDC_TOKEN.toLowerCase()) {
+      aggregatorAddress = getPriceFeedAddress(chainId, 'USDC');
+    } else if (tokenAddress.toLowerCase() === config.USDT_TOKEN.toLowerCase()) {
+      aggregatorAddress = getPriceFeedAddress(chainId, 'USDT');
+    } else {
+      throw new Error("Unsupported token for price feed");
+    }
+
+    console.log("Using aggregator address:", aggregatorAddress);
+    console.log("Chain ID:", chainId);
+    console.log("Token address:", tokenAddress);
+
     // Use walletClient to write to the contract with all required arguments
     const txHash = await walletClient.writeContract({
       address: CONTRACT_ADDRESS,
@@ -114,6 +137,7 @@ export const initiateTransaction = async (
       args: [
         tokenAddress as `0x${string}`,
         BigInt(amount),
+        aggregatorAddress as `0x${string}`,  // Dynamic aggregator address
         BigInt(fiatBankAccountNumber),
         BigInt(fiatAmount),
         fiatBank,
@@ -163,29 +187,43 @@ export const initiateTransaction = async (
 const contractInterface = new ethers.Interface(CONTRACT_ABI);
 
 export async function parseTransactionReceipt(receipt: CombinedTransactionReceipt) {
-  for (const log of receipt.logs) {
+  console.log("=== PARSING TRANSACTION RECEIPT ===");
+  console.log("1. Starting to parse transaction receipt");
+  console.log("2. Number of logs:", receipt.logs.length);
+  console.log("3. Receipt logs:", receipt.logs);
+
+  for (let i = 0; i < receipt.logs.length; i++) {
+    const log = receipt.logs[i];
+    console.log(`4. Processing log ${i}:`, log);
+
     try {
       // Decode the log
       const parsedLog = contractInterface.parseLog(log);
+      console.log(`5. Parsed log ${i}:`, parsedLog);
 
       // Check if the log is the TransactionInitiated event
       if (parsedLog && parsedLog.name === "TransactionInitiated") {
+        console.log("6. ✅ Found TransactionInitiated event!");
         const txId = parsedLog.args.txId;
         const user = parsedLog.args.user;
         const amount = parsedLog.args.amount;
 
-        console.log("Transaction ID:", txId);
-        console.log("User:", user);
-        console.log("Amount:", amount.toString());
+        console.log("7. Transaction ID:", txId);
+        console.log("8. User:", user);
+        console.log("9. Amount:", amount.toString());
 
         return { txId, user, amount };
+      } else if (parsedLog) {
+        console.log(`6. Found event: ${parsedLog.name} (not TransactionInitiated)`);
       }
-    } catch {
-      // Skip logs that cannot be parsed (e.g., logs from other contracts
+    } catch (error) {
+      console.log(`5. ❌ Could not parse log ${i}:`, error);
+      // Skip logs that cannot be parsed (e.g., logs from other contracts)
       continue;
     }
   }
 
-  console.log("TransactionInitiated event not found in logs");
+  console.log("❌ TransactionInitiated event not found in logs");
+  console.log("=== END PARSING TRANSACTION RECEIPT ===");
   return null;
 }

@@ -7,6 +7,10 @@ export const ETHEREUM_SEPOLIA_ADDRESSES = {
   USDT_TOKEN: "0xBA00240A1EfD8E2cc702216c19EF07B2E594bcA6" as `0x${string}`,
   CCIP_BnM: "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05" as `0x${string}`,
   CCIP_LnM: "0x466D489b6d36E7E3b824ef491C225F5830E81cC1" as `0x${string}`,
+  // Price Feed Aggregators
+  USDC_PRICE_FEED: "0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43" as `0x${string}`,
+  USDT_PRICE_FEED: "0x7166098B1E6eeDe0d24C9a4B9bDd1d9041A35E35" as `0x${string}`,
+  ETH_PRICE_FEED: "0x694AA1769357215DE4FAC081bf1f309aDC325306" as `0x${string}`,
 };
 
 
@@ -19,19 +23,28 @@ export const BASE_SEPOLIA_ADDRESSES = {
   USDT_TOKEN: "0x215B6D88f52bb8edaFad77196cf98515D0cd3199" as `0x${string}`,
   CCIP_BnM: "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05" as `0x${string}`,
   CCIP_LnM: "0x466D489b6d36E7E3b824ef491C225F5830E81cC1" as `0x${string}`,
+  // Price Feed Aggregators
+  USDC_PRICE_FEED: "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B" as `0x${string}`,
+  USDT_PRICE_FEED: "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B" as `0x${string}`,
+  ETH_PRICE_FEED: "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B" as `0x${string}`,
 };
 
 
 export const AVALANCHE_FUJI_ADDRESSES = {
-  FIAT_BRIDGE: "0xfE2567096081eB4CF4E0DE60f4E76A9cFD3b39D7" as `0x${string}`,
-  CCIP_TOKEN_TRANSFER: "0xb69AE33bd9aDe08F4E89A0Ca6038CFA2d18c97d3" as `0x${string}`,
+  FIAT_BRIDGE: "0x6184fE404FEa2f1ea523B7F32B460F89Aaa6A566" as `0x${string}`,
+  CCIP_TOKEN_TRANSFER: "0xCcc45b4e9Ef6B93CD9194aaD5Ae0565495EF21DC" as `0x${string}`,
   CCIP_ROUTER: "0xF694E193200268f9a4868e4Aa017A0118C9a8177" as `0x${string}`,
   LINK_TOKEN: "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846" as `0x${string}`,
-  USDC_TOKEN: "0x47EC71e8979ec93fCF71FE64FF1F5ee81D51B024" as `0x${string}`,
-  USDT_TOKEN: "0x87FAD5732C553eb939F89F0D1ec9C5C67d651a05" as `0x${string}`,
+  USDC_TOKEN: "0x6d0FfeF04952180E4dc4AcF549aAC0146DF76313" as `0x${string}`,
+  USDT_TOKEN: "0x14e1E11956b7fCd46BE6a46f019a22298fc60219" as `0x${string}`,
   CCIP_BnM: "0xD21341536c5cF5EB1bcb58f6723cE26e8D8E90e4" as `0x${string}`,
   CCIP_LnM: "0x70F5c5C40b873EA597776DA2C21929A8282A3b35" as `0x${string}`,
   WAVAX_TOKEN: "0xd00ae08403B9bbb9124bB305C09058E32C39A48c" as `0x${string}`,
+  // Price Feed Aggregators - Avalanche Fuji Testnet
+  USDC_PRICE_FEED: "0x97FE42a7E96640D932bbc0e1580c73E705A8EB73" as `0x${string}`, // USDC/USD
+  USDT_PRICE_FEED: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad" as `0x${string}`, // USDT/USD
+  AVAX_PRICE_FEED: "0x5498BB86BC934c8D34FDA08E81D444153d0D06aD" as `0x${string}`, // AVAX/USD
+  ETH_PRICE_FEED: "0x86d67c3D38D2bCeE722E601025C25a575021c6EA" as `0x${string}`, // ETH/USD
 };
 
 
@@ -99,6 +112,22 @@ export const getContractAddresses = (chainId: number) => {
     CCIP_TOKEN_TRANSFER: config.CCIP_TOKEN_TRANSFER,
     CCIP_ROUTER: config.CCIP_ROUTER,
   };
+};
+
+export const getPriceFeedAddress = (chainId: number, tokenType: 'USDC' | 'USDT' | 'ETH' | 'AVAX') => {
+  const config = getChainConfig(chainId);
+  switch (tokenType) {
+    case 'USDC':
+      return config.USDC_PRICE_FEED;
+    case 'USDT':
+      return config.USDT_PRICE_FEED;
+    case 'ETH':
+      return config.ETH_PRICE_FEED;
+    case 'AVAX':
+      return config.AVAX_PRICE_FEED;
+    default:
+      throw new Error(`Unsupported token type: ${tokenType}`);
+  }
 };
 
 

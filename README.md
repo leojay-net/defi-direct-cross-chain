@@ -162,9 +162,9 @@ function calculateTokenPriceAndFee(
 
 ### Network Configuration
 
-The project is deployed on multiple Avalanche networks:
+The project is deployed on multiple Avalanche networks with **Avalanche Fuji Testnet** as the primary deployment:
 
-#### Avalanche Fuji Testnet (Chain ID: 43113)
+#### Avalanche Fuji Testnet (Chain ID: 43113) - **Primary Network**
 ```typescript
 avalancheFuji: {
     url: process.env.AVALANCHE_FUJI_URL || "https://api.avax-test.network/ext/bc/C/rpc",
@@ -173,6 +173,17 @@ avalancheFuji: {
     gasPrice: 30000000000, // 30 gwei
 }
 ```
+
+**Deployed Contracts:**
+- **FiatBridge**: `0x6184fE404FEa2f1ea523B7F32B460F89Aaa6A566`
+- **CCIPTokenTransfer**: `0xCcc45b4e9Ef6B93CD9194aaD5Ae0565495EF21DC`
+- **Mock USDC**: `0x6d0FfeF04952180E4dc4AcF549aAC0146DF76313`
+- **Mock USDT**: `0x14e1E11956b7fCd46BE6a46f019a22298fc60219`
+
+**Cross-Chain Support:**
+- Ethereum Sepolia (Chain Selector: `16015286601757825753`)
+- Base Sepolia (Chain Selector: `10344971235874465080`)
+- Polygon Mumbai (Chain Selector: `12532609583862916517`)
 
 #### Echo L1 Subnet (Chain ID: 173750)
 ```typescript

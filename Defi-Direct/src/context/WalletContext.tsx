@@ -101,8 +101,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [disconnect]);
 
   const refetchTransactions = useCallback(() => {
-    setTransactionTrigger(prev => prev + 1);
-  }, []);
+    console.log("=== REFETCH TRANSACTIONS CALLED ===");
+    console.log("1. refetchTransactions function called");
+    console.log("2. Current transactionTrigger:", transactionTrigger);
+    setTransactionTrigger(prev => {
+      const newValue = prev + 1;
+      console.log("3. New transactionTrigger value:", newValue);
+      return newValue;
+    });
+    console.log("4. Transaction trigger updated");
+  }, [transactionTrigger]);
 
   const addPendingTransaction = useCallback((tx: Transaction) => {
     setPendingTransactions(prev => [...prev, tx]);

@@ -102,39 +102,56 @@ export default function TransactionList() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const fetchTransactions = useCallback(async () => {
+    console.log("=== FETCH TRANSACTIONS CALLED ===");
+    console.log("1. fetchTransactions function called");
+    console.log("2. Connected address:", connectedAddress);
+    console.log("3. Transaction trigger:", transactionTrigger);
+
     if (!connectedAddress) {
+      console.log("❌ No connected wallet address found");
       setError("No connected wallet address found.");
       setLoading(false);
       return;
     }
 
     try {
+      console.log("4. Calling retrieveTransactions...");
       const transactionResult = await retrieveTransactions(
         connectedAddress as `0x${string}`
       );
 
-      console.log("Transaction result:", transactionResult);
+      console.log("5. Transaction result:", transactionResult);
 
       if (Array.isArray(transactionResult) && transactionResult.length > 0) {
+        console.log("6. Formatting transactions...");
         const formattedTransactions = transactionResult.map((tx, index) =>
           formatTransaction(tx, index, []) // Pass empty array for pending transactions
         );
+        console.log("7. Formatted transactions:", formattedTransactions);
         setConfirmedTransactions(formattedTransactions);
         setError(null);
       } else {
+        console.log("6. No transactions found or empty result");
         setConfirmedTransactions([]);
         setError(null);
       }
     } catch (err: unknown) {
+      console.log("❌ Error fetching transactions:", err);
       setError("Failed to fetch transactions. Please try again.");
       console.error("Error fetching transactions:", err);
       setConfirmedTransactions([]);
     } finally {
+      console.log("8. Setting loading to false");
       setLoading(false);
     }
   }, [connectedAddress]); // Remove pendingTransactions from dependencies
 
   useEffect(() => {
+    console.log("=== TRANSACTION LIST USE EFFECT ===");
+    console.log("1. useEffect triggered");
+    console.log("2. fetchTransactions dependency changed");
+    console.log("3. transactionTrigger value:", transactionTrigger);
+
     // Fetch transactions immediately when transactionTrigger changes
     fetchTransactions();
   }, [fetchTransactions, transactionTrigger]);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,64 +15,76 @@ import {
     Info
 } from 'lucide-react';
 import { SUPPORTED_CHAINS } from '@/config';
+import { BackendService } from '@/services/backendService';
+import { useAccount } from 'wagmi';
 
 interface CrossChainTransfer {
     id: string;
     messageId: string;
-    transactionHash: string;
+    transactionHash?: string;
     sourceChain: string;
     destinationChain: string;
     token: string;
     amount: string;
     receiver: string;
-    status: 'pending' | 'confirmed' | 'failed';
+    status: 'pending' | 'initiated' | 'in_progress' | 'completed' | 'failed' | 'refunded';
     timestamp: Date;
     estimatedFee: string;
     feeToken: string;
 }
 
-// Mock data for demonstration
-const mockTransfers: CrossChainTransfer[] = [
-    {
-        id: '1',
-        messageId: '0x1234...5678',
-        transactionHash: '0xabcd...efgh',
-        sourceChain: 'Base Sepolia',
-        destinationChain: 'Ethereum Sepolia',
-        token: 'CCIP-BnM',
-        amount: '100.0',
-        receiver: '0x9876...5432',
-        status: 'confirmed',
-        timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-        estimatedFee: '0.005',
-        feeToken: 'ETH'
-    },
-    {
-        id: '2',
-        messageId: '0x2345...6789',
-        transactionHash: '0xbcde...fghi',
-        sourceChain: 'Base Sepolia',
-        destinationChain: 'Ethereum Sepolia',
-        token: 'CCIP-LnM',
-        amount: '50.0',
-        receiver: '0x8765...4321',
-        status: 'pending',
-        timestamp: new Date(Date.now() - 600000), // 10 minutes ago
-        estimatedFee: '0.003',
-        feeToken: 'ETH'
-    }
-];
-
 export const CrossChainTransferHistory = () => {
-    const [transfers] = useState<CrossChainTransfer[]>(mockTransfers);
+    const [transfers, setTransfers] = useState<CrossChainTransfer[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const { address } = useAccount();
+
+    const fetchTransfers = async () => {
+        if (!address) return;
+
+        try {
+            setIsLoading(true);
+            setError(null);
+
+            const backendTransfers = await BackendService.getUserCrossChainTransfers(address, {
+                page_size: 50
+            });
+
+            const formattedTransfers: CrossChainTransfer[] = backendTransfers.map(transfer => ({
+                id: transfer.id,
+                messageId: transfer.messageId,
+                transactionHash: transfer.transactionHash,
+                sourceChain: transfer.sourceChain,
+                destinationChain: transfer.destinationChain,
+                token: transfer.tokenSymbol || 'TOKEN',
+                amount: transfer.amount,
+                receiver: transfer.userAddress,
+                status: transfer.status,
+                timestamp: new Date(parseInt(transfer.timestamp) * 1000),
+                estimatedFee: transfer.fee,
+                feeToken: 'LINK'
+            }));
+
+            setTransfers(formattedTransfers);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to fetch transfers';
+            setError(errorMessage);
+            console.error('Error fetching transfers:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const refreshTransfers = async () => {
         setIsRefreshing(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await fetchTransfers();
         setIsRefreshing(false);
     };
+
+    useEffect(() => {
+        fetchTransfers();
+    }, [address]);
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
@@ -97,11 +109,14 @@ export const CrossChainTransferHistory = () => {
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'confirmed':
+            case 'completed':
                 return <CheckCircle className="h-4 w-4 text-green-500" />;
             case 'pending':
+            case 'initiated':
+            case 'in_progress':
                 return <Clock className="h-4 w-4 text-yellow-500" />;
             case 'failed':
+            case 'refunded':
                 return <XCircle className="h-4 w-4 text-red-500" />;
             default:
                 return <Clock className="h-4 w-4 text-gray-400" />;
@@ -110,11 +125,14 @@ export const CrossChainTransferHistory = () => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'confirmed':
+            case 'completed':
                 return 'bg-green-500';
             case 'pending':
+            case 'initiated':
+            case 'in_progress':
                 return 'bg-yellow-500';
             case 'failed':
+            case 'refunded':
                 return 'bg-red-500';
             default:
                 return 'bg-gray-600';
@@ -161,7 +179,36 @@ export const CrossChainTransferHistory = () => {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {transfers.length === 0 ? (
+                    {isLoading ? (
+                        <div className="text-center py-8">
+                            <div className="flex items-center justify-center mb-4">
+                                <RefreshCw className="h-8 w-8 animate-spin text-[#9C2CFF]" />
+                            </div>
+                            <div className="text-gray-400 mb-2">Loading transfer history...</div>
+                            <div className="text-sm text-gray-500">
+                                Fetching your cross-chain transfers from the backend
+                            </div>
+                        </div>
+                    ) : error ? (
+                        <div className="text-center py-8">
+                            <div className="flex items-center justify-center mb-4">
+                                <XCircle className="h-8 w-8 text-red-500" />
+                            </div>
+                            <div className="text-red-400 mb-2">Failed to load transfers</div>
+                            <div className="text-sm text-gray-500 mb-4">
+                                {error}
+                            </div>
+                            <Button
+                                onClick={refreshTransfers}
+                                variant="outline"
+                                size="sm"
+                                className="border-gray-600 text-gray-300 hover:bg-[#2F2F3A]"
+                            >
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Try Again
+                            </Button>
+                        </div>
+                    ) : transfers.length === 0 ? (
                         <div className="text-center py-8">
                             <div className="text-gray-400 mb-2">No cross-chain transfers yet</div>
                             <div className="text-sm text-gray-500">
@@ -225,10 +272,10 @@ export const CrossChainTransferHistory = () => {
                                                 <div className="text-gray-400 mb-1">Transaction Hash</div>
                                                 <div className="flex items-center gap-2">
                                                     <code className="text-[#9C2CFF] bg-[#1C1C27] px-2 py-1 rounded">
-                                                        {formatAddress(transfer.transactionHash)}
+                                                        {formatAddress(transfer.transactionHash || '')}
                                                     </code>
                                                     <Button
-                                                        onClick={() => copyToClipboard(transfer.transactionHash)}
+                                                        onClick={() => copyToClipboard(transfer.transactionHash || '')}
                                                         variant="ghost"
                                                         size="sm"
                                                         className="h-6 w-6 p-0"
