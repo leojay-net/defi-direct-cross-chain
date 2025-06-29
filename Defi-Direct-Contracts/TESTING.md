@@ -13,16 +13,6 @@ This project includes comprehensive tests for the FiatBridge contract with Chain
 npm run test:fork
 ```
 
-## Setup Instructions
-
-### Environment Variables
-Create a `.env` file with:
-```bash
-ETHEREUM_SEPOLIA_URL=https://sepolia.infura.io/v3/YOUR_INFURA_KEY
-# or
-ETHEREUM_SEPOLIA_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_KEY
-```
-
 ### Hardhat Configuration
 
 The project is configured to:
