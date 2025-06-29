@@ -1,0 +1,8 @@
+{
+  "fuji": {
+    "FiatBridge": {
+      "address": "0xfE2567096081eB4CF4E0DE60f4E76A9cFD3b39D7",
+      "startBlock": 42583659
+    }
+  }
+}

@@ -1,0 +1,80 @@
+/* Clean Civic Auth Modal Styling */
+.civic-auth-wrapper {
+    position: relative;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ensure Civic Auth iframe is properly displayed and centered */
+iframe[src*="civic"] {
+    width: 100% !important;
+    max-width: 360px !important;
+    min-height: 320px !important;
+    height: auto !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: white !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin: 0 auto !important;
+}
+
+/* Civic Auth container styling - Perfect centering */
+[data-testid="civic-auth-iframe-container"] {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 320px !important;
+    text-align: center !important;
+}
+
+/* Ensure the iframe wrapper centers everything */
+[data-testid="civic-auth-iframe-container"]>div {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+/* Remove any conflicting modal z-index issues */
+.civic-auth-wrapper iframe {
+    position: relative !important;
+    z-index: 101 !important;
+}
+
+/* Ensure proper iframe sizing on mobile */
+@media (max-width: 640px) {
+    iframe[src*="civic"] {
+        min-height: 280px !important;
+        max-width: 320px !important;
+    }
+
+    [data-testid="civic-auth-iframe-container"] {
+        min-height: 280px !important;
+    }
+}
+
+/* Additional centering rules for nested containers */
+.civic-auth-wrapper * {
+    text-align: center !important;
+}
+
+/* Force center alignment for all civic auth elements */
+[data-testid*="civic"] {
+    margin: 0 auto !important;
+    text-align: center !important;
+}
+
+/* Center any civic auth root elements */
+div[class*="civic"] {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 auto !important;
+}

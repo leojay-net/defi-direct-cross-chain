@@ -1,0 +1,59 @@
+specVersion: 1.3.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: FiatBridge
+    network: fuji
+    source:
+      address: "0xfE2567096081eB4CF4E0DE60f4E76A9cFD3b39D7"
+      abi: FiatBridge
+      startBlock: 42583659
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - CCIPContractUpdated
+        - CrossChainTransferInitiated
+        - FeesWithdrawn
+        - OwnershipTransferred
+        - Paused
+        - PriceFeedUsed
+        - TokenAdded
+        - TokenRemoved
+        - TransactionCompleted
+        - TransactionInitiated
+        - TransactionRefunded
+        - Unpaused
+      abis:
+        - name: FiatBridge
+          file: ./abis/FiatBridge.json
+      eventHandlers:
+        - event: CCIPContractUpdated(indexed address,indexed address)
+          handler: handleCCIPContractUpdated
+        - event: CrossChainTransferInitiated(indexed bytes32,indexed address,indexed uint64,address,uint256)
+          handler: handleCrossChainTransferInitiated
+        - event: FeesWithdrawn(indexed address,uint256)
+          handler: handleFeesWithdrawn
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Paused(address)
+          handler: handlePaused
+        - event: PriceFeedUsed(indexed address,int256)
+          handler: handlePriceFeedUsed
+        - event: TokenAdded(indexed address)
+          handler: handleTokenAdded
+        - event: TokenRemoved(indexed address)
+          handler: handleTokenRemoved
+        - event: TransactionCompleted(indexed bytes32,uint256)
+          handler: handleTransactionCompleted
+        - event: TransactionInitiated(indexed bytes32,indexed address,uint256)
+          handler: handleTransactionInitiated
+        - event: TransactionRefunded(indexed bytes32,uint256)
+          handler: handleTransactionRefunded
+        - event: Unpaused(address)
+          handler: handleUnpaused
+      file: ./src/fiat-bridge.ts

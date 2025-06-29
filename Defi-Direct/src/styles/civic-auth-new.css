@@ -1,0 +1,45 @@
+/* Simple and effective Civic Auth iframe styling */
+
+/* Civic Auth container - perfect centering */
+.civic-auth-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Ensure Civic Auth iframe is properly displayed and centered */
+iframe[src*="civic"] {
+    width: 100% !important;
+    max-width: 400px !important;
+    min-height: 350px !important;
+    height: auto !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: white !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin: 0 auto !important;
+}
+
+/* Civic Auth container styling */
+[data-testid="civic-auth-iframe-container"] {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 350px !important;
+}
+
+/* Ensure proper iframe sizing on mobile */
+@media (max-width: 640px) {
+    iframe[src*="civic"] {
+        min-height: 300px !important;
+        max-width: 350px !important;
+    }
+
+    [data-testid="civic-auth-iframe-container"] {
+        min-height: 300px !important;
+    }
+}

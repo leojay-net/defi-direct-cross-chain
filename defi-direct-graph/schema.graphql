@@ -1,0 +1,194 @@
+type CCIPContractUpdated @entity(immutable: true) {
+  id: Bytes!
+  oldContract: Bytes! # address
+  newContract: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CrossChainTransferInitiated @entity(immutable: true) {
+  id: Bytes!
+  messageId: Bytes! # bytes32
+  user: Bytes! # address
+  destinationChain: BigInt! # uint64
+  token: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FeesWithdrawn @entity(immutable: true) {
+  id: Bytes!
+  token: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Paused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PriceFeedUsed @entity(immutable: true) {
+  id: Bytes!
+  aggregator: Bytes! # address
+  price: BigInt! # int256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TokenAdded @entity(immutable: true) {
+  id: Bytes!
+  token: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TokenRemoved @entity(immutable: true) {
+  id: Bytes!
+  token: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TransactionCompleted @entity(immutable: true) {
+  id: Bytes!
+  txId: Bytes! # bytes32
+  amountSpent: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TransactionInitiated @entity(immutable: true) {
+  id: Bytes!
+  txId: Bytes! # bytes32
+  user: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TransactionRefunded @entity(immutable: true) {
+  id: Bytes!
+  txId: Bytes! # bytes32
+  amountRefunded: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Unpaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type User @entity(immutable: true) {
+  id: Bytes!
+  address: Bytes!
+  transactionCount: Int!
+  totalVolume: BigDecimal!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type Token @entity(immutable: true) {
+  id: Bytes!
+  address: Bytes!
+  symbol: String
+  name: String
+  decimals: Int
+  totalVolume: BigDecimal!
+  transactionCount: Int!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type Transaction @entity(immutable: true) {
+  id: Bytes!
+  txId: Bytes!
+  user: User!
+  token: Token!
+  amount: BigDecimal!
+  amountSpent: BigDecimal
+  fee: BigDecimal
+  status: String!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  crossChain: Boolean!
+  crossChainTransfer: CrossChainTransfer
+}
+
+type CrossChainTransfer @entity(immutable: true) {
+  id: Bytes!
+  messageId: Bytes!
+  user: User!
+  token: Token!
+  amount: BigDecimal!
+  destinationChain: BigInt!
+  status: String!
+  transaction: Transaction!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type DailyStats @entity(immutable: true) {
+  id: String!
+  date: Int!
+  transactionCount: Int!
+  volume: BigDecimal!
+  uniqueUsers: Int!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type ProtocolStats @entity(immutable: true) {
+  id: String!
+  totalVolume: BigDecimal!
+  totalTransactions: Int!
+  uniqueUsers: Int!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type ChainStats @entity(immutable: true) {
+  id: String!
+  chainId: BigInt!
+  transactionCount: Int!
+  volume: BigDecimal!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type CrossChainRoute @entity(immutable: true) {
+  id: String!
+  sourceChain: BigInt!
+  destinationChain: BigInt!
+  transactionCount: Int!
+  volume: BigDecimal!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}

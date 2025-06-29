@@ -1,0 +1,25 @@
+{
+  "name": "hardhat-project",
+  "scripts": {
+    "test": "hardhat test",
+    "test:fork": "hardhat test test/Direct.fork.ts",
+    "test:ccip:fork": "hardhat test test/CCIPTokenTransfer.fork.ts",
+    "test:ccip:unit": "hardhat test test/CCIPTokenTransfer.unit.ts",
+    "test:ccip:integration": "hardhat test test/CCIPTokenTransfer.integration.ts",
+    "test:ccip:all": "hardhat test test/CCIPTokenTransfer.*.ts",
+    "test:all": "hardhat test test/Direct.fork.ts test/CCIPTokenTransfer.*.ts",
+    "compile": "hardhat compile",
+    "node": "hardhat node",
+    "deploy": "hardhat run scripts/deploy.ts"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.18"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^1.4.0",
+    "@chainlink/contracts-ccip": "^1.6.0",
+    "@openzeppelin/contracts": "^5.2.0",
+    "dotenv": "^16.4.7"
+  }
+}
